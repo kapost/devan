@@ -5,14 +5,15 @@ Devan is an [Adobe CRX](http://wem.help.adobe.com/enterprise/en_US/10-0/core/get
 
 Getting Started
 ---------------
-Initialize a remote repository instance:
+
+#### Repository
 
 ```ruby
 repo = Devan::Repository.new('http://localhost:4502')
 repo.login('admin', 'admin')
 ```
 
-Navigate/Find:
+#### Navigate or Find
 
 ```ruby
 puts repo.root.children
@@ -20,21 +21,21 @@ puts repo.root.find('content').children
 puts repo.root.node('content/blog').find('01').children
 ```
 
-Create:
+#### Create
 
 ```ruby
 attrs = {:title => 'my awesome post', :text => '<b>awesome</b>'}
 puts repo.root.node('content/blog/01').add('my_post', attrs)
 ```
 
-Update:
+#### Update
 
 ```ruby
 node = repo.root.node('content/blog/01/my_post')
 node.update_attributes(:title => 'a new post title')
 ```
 
-Delete:
+#### Delete
 
 ```ruby
 node = repo.root.node('content/blog/01/my_post')
