@@ -29,14 +29,14 @@ puts repo.root.node('content/blog/01').add('my_post', attrs)
 
 Update:
 
-```
+```ruby
 node = repo.root.node('content/blog/01/my_post')
 node.update_attributes(:title => 'a new post title')
 ```
 
 Delete:
 
-```
+```ruby
 node = repo.root.node('content/blog/01/my_post')
 node.delete
 ```
