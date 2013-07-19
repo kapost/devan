@@ -7,7 +7,7 @@ module Devan
   class Client
     class HTTPClient
       include HTTParty
-      headers 'User-Agent' => "Devan Ruby JCR Client v#{VERSION}"
+      headers 'User-Agent' => "Devan v#{VERSION} - Adobe CRX Client"
 #      debug_output $stdout
     end
 
