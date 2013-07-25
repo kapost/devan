@@ -63,7 +63,7 @@ module Devan
     def safe_response
       response = yield
 
-      raise Error.new(parse_error(response.body), response.code) unless response.code / 10 == 20
+      raise Error.new(response.body, response.code) unless response.code / 10 == 20
 
       if response.parsed_response.is_a? Hash
         response.parsed_response
@@ -76,15 +76,6 @@ module Devan
       end
     rescue Timeout::Error => e
       raise Error.new('The operation has timed-out', 408)
-    end
-
-    def parse_error(response)
-      m = response.match(/<h1>(.*?)<\/h1>/)
-      if m and m[1].to_s.size > 0
-        m[1]
-      else
-        response
-      end
     end
 
     def http

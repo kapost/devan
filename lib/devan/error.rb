@@ -4,7 +4,20 @@ module Devan
 
     def initialize(message, code=0)
       @code = code
-      super(message)
+      super(parse_error_message(message))
+    end
+
+    protected
+
+    def parse_error_message(response)
+      tags = ['h1', 'dcr:message'].join('|')
+
+      m = response.match(/(<(#{tags})>(.*?)<\/(#{tags})>)/)
+      if m and m[2].to_s.size > 0
+        m[2]
+      else
+        response
+      end
     end
   end
 end
