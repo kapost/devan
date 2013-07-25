@@ -12,7 +12,7 @@ module Devan
     def parse_error_message(response)
       tags = ['h1', 'dcr:message'].join('|')
 
-      m = response.match(/(<(#{tags})>(.*?)<\/(#{tags})>)/)
+      m = response.match(/(<(#{tags})>\s*(.*?)\s*<\/(#{tags})>)/)
       if m and m[3].to_s.size > 0
         m[3]
       else
