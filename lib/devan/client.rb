@@ -23,11 +23,11 @@ module Devan
     end
 
     def activate(path)
-      replicate(:cmd => 'Activate', :path => clean_path(path))
+      replicate(:cmd => 'Activate', :path => non_crx_path(path))
     end
 
     def deactive(path)
-      replicate(:cmd => 'Deactivate', :path => clean_path(path))
+      replicate(:cmd => 'Deactivate', :path => non_crx_path(path))
     end
 
     def replicate(params)
@@ -36,7 +36,7 @@ module Devan
     end
 
     def delete(path)
-      !safe_response { http.post(clean_path(path), :body => { ':operation' => 'delete' }) }.nil?
+      !safe_response { http.post(non_crx_path(path), :body => { ':operation' => 'delete' }) }.nil?
     end
 
     def fetch(path, depth=0)
@@ -44,12 +44,12 @@ module Devan
     end
 
     def store(path, properties={})
-      !safe_response { http.post(path, :body => properties) }.nil?
+      !safe_response { http.post(non_crx_path(path), :body => properties) }.nil?
     end
 
     protected
 
-    def clean_path(path)
+    def non_crx_path(path)
       path.gsub(@path, '')
     end
 
