@@ -62,7 +62,10 @@ module Devan
     def save
       if @changes.size > 0
         client.store(path, @changes)
-        self.load
+
+        @children = nil
+        @properties.merge!(@changes)
+        @changes = {}
       end
     end
 
