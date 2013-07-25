@@ -10,13 +10,17 @@ module Devan
     protected
 
     def parse_error_message(response)
-      tags = ['h1', 'dcr:message'].join('|')
-
-      m = response.match(/(<(#{tags})>\s*(.*?)\s*<\/(#{tags})>)/)
-      if m and m[3].to_s.size > 0
-        m[3]
+      m = response.match(/<div id="Message">\s*(.*?)\s*<\/div>/)
+      if m and m[1].to_s.size > 0
+        m[1]
       else
-        response
+        tags = ['h1', 'dcr:message'].join('|')
+        m = response.match(/(<(#{tags})>\s*(.*?)\s*<\/(#{tags})>)/)
+        if m and m[3].to_s.size > 0
+          m[3]
+        else
+          response
+        end
       end
     end
   end
