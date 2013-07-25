@@ -13,8 +13,8 @@ module Devan
       tags = ['h1', 'dcr:message'].join('|')
 
       m = response.match(/(<(#{tags})>(.*?)<\/(#{tags})>)/)
-      if m and m[2].to_s.size > 0
-        m[2]
+      if m and m[3].to_s.size > 0
+        m[3]
       else
         response
       end
