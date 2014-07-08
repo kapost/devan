@@ -1,66 +1,68 @@
-require 'httparty'
-require 'json'
-require 'cgi'
-require 'uri'
-
 module Devan
   class Client
     class HTTPClient
-      include HTTParty
-      headers 'User-Agent' => "Devan v#{VERSION} - Adobe CRX Client"
-#      debug_output $stdout
+      include HTTMultiParty
+      headers 'User-Agent' => VERSION_STRING
+      debug_output $stdout
     end
 
     attr_reader :url
     attr_reader :username
     attr_reader :password
+    attr_reader :proxy
 
-    def initialize(url, username, password)
+    def initialize(url, username, password, proxy=nil)
+      @url      = url
       @username = username
       @password = password
-
-      set_url_and_path(url)
+      @proxy    = nil
     end
 
-    def activate(path)
-      replicate(:cmd => 'Activate', :path => non_crx_path(path))
+    def activate(path, opts={})
+      replicate({ :cmd => 'activate', :path => path }.merge!(opts))
     end
 
-    def deactive(path)
-      replicate(:cmd => 'Deactivate', :path => non_crx_path(path))
+    def deactivate(path, opts={})
+      replicate({ :cmd => 'deactivate', :path => path }.merge!(opts))
     end
 
-    def replicate(params)
-      replicate_params = { :_charset => 'utf-8' }.merge!(params)
-      !safe_response { http.post('/bin/replicate.json', :body => replicate_params) }.nil?
+    def activateTree(path, opts={})
+      replicateTree({ :cmd => 'activate', :path => path }.merge!(opts))
+    end
+
+    def deactivateTree(path, opts={})
+      replicateTree({ :cmd => 'deactivate', :path => path }.merge!(opts))
     end
 
     def delete(path)
-      !safe_response { http.post(non_crx_path(path), :body => { ':operation' => 'delete' }) }.nil?
+      !parse_response { http.post(path, :body => { ':operation' => 'delete' }) }.nil?
     end
 
-    def fetch(path, depth=0)
-      safe_response { http.get("#{path}.#{depth}.json") }
+    def get(path, depth=0)
+      parse_response { http.get("#{path}.#{depth}.json") }
     end
 
-    def store(path, properties={})
-      !safe_response { http.post(non_crx_path(path), :body => properties) }.nil?
+    def post(path, body={}) 
+      !parse_response { http.post(path, :body => body) }.nil?
     end
 
     protected
 
-    def non_crx_path(path)
-      path.gsub(@path, '')
+    def replicate(params)
+      !parse_response do
+        body = { :_charset => 'utf-8' }.merge!(params)
+        http.post('/bin/replicate.json', :body => body)
+      end.nil?
     end
 
-    def set_url_and_path(url)
-      uri = URI.parse(url)
-      @path = uri.path.dup
-      uri.path = ''
-      @url = uri.to_s
+    def replicateTree(params)
+      !parse_response do
+        body = { :_charset => 'utf-8', :ignoredeactivated => 'true', :onlymodified => 'true' }.merge!(params)
+        http.post('/etc/replication/treeactivation.html', :body => body)
+      end.nil?
     end
 
-    def safe_response
+    def parse_response
       response = yield
 
       raise Error.new(response.body, response.code) unless response.code / 10 == 20
@@ -74,16 +76,18 @@ module Devan
       else
         nil
       end
-    rescue Timeout::Error => e
-      raise Error.new('The operation has timed-out', 408)
     end
 
     def http
       @http ||= begin
         client = self
         Class.new(HTTPClient) do |klass|
-          klass.base_uri(client.url)
+          klass.base_uri(client.url.to_s)
           klass.basic_auth(client.username, client.password)
+
+          if proxy = client.proxy
+            klass.http_proxy(proxy.host, proxy.port, proxy.user, proxy.password)
+          end
         end
       end
     end

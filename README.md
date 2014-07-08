@@ -5,41 +5,124 @@ Devan is an [Adobe CRX](http://wem.help.adobe.com/enterprise/en_US/10-0/core/get
 
 Getting Started
 ---------------
+The easiest way to get started is by taking a look at some of the examples written in Java that 
+demonstrate how to work with a CRX/JCR repository.
 
-#### Repository
+```java
+/*
+ * This Java Quick Start uses the jackrabbit-standalone-2.4.0.jar
+ * file. See the previous section for the location of this JAR file
+ * 
+ * Source: http://helpx.adobe.com/experience-manager/using/programmatically-accessing-cq-content-using.html
+ */
+import javax.jcr.Repository; 
+import javax.jcr.Session; 
+import javax.jcr.SimpleCredentials; 
+import javax.jcr.Node; 
 
-```ruby
-repo = Devan::Repository.new('http://localhost:4502')
-repo.login('admin', 'admin')
+import org.apache.jackrabbit.commons.JcrUtils;
+import org.apache.jackrabbit.core.TransientRepository; 
+
+public class GetRepository { 
+  public static void main(String[] args) throws Exception { 
+
+    try { 
+      //Create a connection to the CQ repository running on local host 
+      Repository repository = JcrUtils.getRepository("http://localhost:4502/crx/server");
+
+      //Create a Session
+      javax.jcr.Session session = repository.login( new SimpleCredentials("admin", "admin".toCharArray())); 
+
+      //Create a node that represents the root node
+      Node root = session.getRootNode(); 
+
+      // Store content 
+      Node adobe = root.addNode("adobe"); 
+      Node day = adobe.addNode("cq"); 
+      day.setProperty("message", Adobe Experience Manager is part of the Adobe Digital Marketing Suite!"); 
+
+      // Retrieve content 
+      Node node = root.getNode("adobe/cq"); 
+      System.out.println(node.getPath()); 
+      System.out.println(node.getProperty("message").getString()); 
+
+      // Save the session changes and log out
+      session.save(); 
+      session.logout();
+    }
+    catch(Exception e){
+      e.printStackTrace();
+    }
+  } 
+}
 ```
 
-#### Navigate or Find
+The example above is rewritten as follows using `Devan`.
 
 ```ruby
-puts repo.root.children
-puts repo.root.find('content').children
-puts repo.root.node('content/blog').find('01').children
+require 'devan'
+
+begin
+  repository = Devan::Repository.new('http://localhost:4502')
+  repository.login(Devan::Credentials.new('admin', 'admin'))
+
+  root = repository.getRootNode()
+  adobe = root.addNode("adobe")
+  
+  day = adobe.addNode("cq")
+  day.setProperty("message", "Adobe Experience Manager is part of the Adobe Digital Marketing Suite!")
+
+  node = root.getNode("adobe/cq")
+  puts node.getPath()
+  puts node.getProperty("message")
+
+  repository.save
+  repository.logout
+rescue Devan::Error => e
+  puts e.backtrace.join("\n")
+end
 ```
 
-#### Create
+Now let's take a look at a 'file upload' example and its equivalent using
+`Devan`.
 
-```ruby
-attrs = {:title => 'my awesome post', :text => '<b>awesome</b>'}
-puts repo.root.node('content/blog/01').add('my_post', attrs)
+```java
+/*
+  Source: http://wiki.apache.org/jackrabbit/ExamplesPage
+*/
+public Node importFile (Node folderNode, File file, String mimeType,
+    String encoding) throws RepositoryException, IOException
+{
+  //create the file node - see section 6.7.22.6 of the spec
+  Node fileNode = folderNode.addNode (file.getName (), "nt:file");
+
+  //create the mandatory child node - jcr:content
+  Node resNode = fileNode.addNode ("jcr:content", "nt:resource");
+  resNode.setProperty ("jcr:mimeType", mimeType);
+  resNode.setProperty ("jcr:encoding", encoding);
+  resNode.setProperty ("jcr:data", new FileInputStream (file));
+  Calendar lastModified = Calendar.getInstance ();
+  lastModified.setTimeInMillis (file.lastModified ());
+  resNode.setProperty ("jcr:lastModified", lastModified);
+
+  return fileNode;
+}
 ```
 
-#### Update
+The example above is rewritten as follows using `Devan`.
 
 ```ruby
-node = repo.root.node('content/blog/01/my_post')
-node.update_attributes(:title => 'a new post title')
-```
+def importFile(folderNode, file, mimeType, encoding)
+  fileNode = folderNode.addNode(File.basename(file.path), "nt:file")
 
-#### Delete
+  resNode = fileNode.addNode("jcr:content", "nt:resource")
+  resNode.setProperty("jcr:mimeType", mimeType);
+  resNode.setProperty("jcr:encoding", encoding);
+  resNode.setProperty("jcr:data", Devan::Binary.new(file));
+  resNode.setProperty("jcr:lastModified", Devan::DateTime.new(file.mtime));
 
-```ruby
-node = repo.root.node('content/blog/01/my_post')
-node.delete
+  fileNode
+end
 ```
 
 TODO
@@ -56,7 +139,7 @@ Contribute
 
 License
 -------
-Copyright (c) 2013, Mihail Szabolcs
+Copyright (c) 2013 - 2014, Mihail Szabolcs
 
 Devan is provided **as-is** under the **MIT** license. For more information see
 LICENSE.

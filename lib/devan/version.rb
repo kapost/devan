@@ -1,3 +1,4 @@
 module Devan
-  VERSION = '0.1.0'
+  VERSION = '0.2.0'
+  VERSION_STRING = "Devan v#{VERSION} - Adobe CRX Client"
 end

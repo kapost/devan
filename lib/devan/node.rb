@@ -1,114 +1,183 @@
 module Devan
   class Node
-    attr_reader :name
-    attr_reader :parent
-    attr_reader :properties
+    JCR_PRIMARY_TYPE = 'jcr:primaryType'
+    JCR_MIXIN_TYPE = 'jcr:mixinTypes'
 
-    attr_accessor :changes
+    class Path
+      SEPARATOR = '/'
 
-    def initialize(name, properties, parent, path=nil)
-      @name = name
-      @properties = properties || {}
-      @parent = parent
-      @path = path
-      @children = nil
-      @changes = {}
+      class << self
+        def split(path)
+          path.split(SEPARATOR)
+        end
 
-      process_properties!
-    end
+        def join(*args)
+          File.join(*args)
+        end
 
-    def add(name, properties={})
-      child = Node.new(name, {}, self)
-      child.changes = properties
-      child.save
-
-      @children << child if @children
-
-      child
-    end
-
-    def update_attributes(attrs)
-      @changes.merge!(attrs)
-      save
-    end
-
-    def set(name, value)
-      @changes[name] = value
-    end
-
-    def get(name)
-      @changes[name] || @properties[name]
-    end
-
-    def children
-      @children ||= process_children(client.fetch(path, 1))
-    end
-
-    def activate
-      client.activate(path)
-    end
-
-    def deactivate
-      client.deactive(path)
-    end
-
-    def load
-      @children = nil
-      @changes = {}
-      @properties = client.fetch(path)
-      process_properties!
-    end
-
-    def save
-      if @changes.size > 0
-        client.store(path, @changes)
-
-        @children = nil
-        @properties.merge!(@changes)
-        @changes = {}
+        def abs(*args)
+          join(SEPARATOR, *args)
+        end
       end
     end
 
-    def delete
-      client.delete(path)
+    def initialize(path, parent, repo)
+      @path         = path
+      @parent       = parent
+      @repo         = repo
+      @nodes        = {}
+      @properties   = {}
+      @types        = {}
+      @primaryType  = nil
+      @mixins       = []
+      @changes      = {}
     end
 
-    def find(name)
-      children.find { |child| child.name == name }
+    def changed?
+      @changes.any? || !@nodes.values.detect do |node|
+        node.respond_to?(:changed?) && node.changed?
+      end.nil?
     end
 
-    def path
-      @path ||= [parent.path, @name].join('/')
+    def hasNodes?
+      @nodes.any?
     end
 
-    def to_s
-      p = properties.map do |k, v|
-        "#{k.inspect}=#{v.inspect}"
-      end.join(', ')
+    def hasNode?(path)
+      !@nodes[path].nil?
+    end
 
-      "<#{self.class}: @name=#{name.inspect}, @properties={#{p}}>"
+    def hasProperties?
+      @properties.any?
+    end
+
+    def getPath
+      @path
+    end
+
+    def getParent
+      @parent
+    end
+
+    def addNode(path, type=nil)
+      segments = Path.split(path)
+
+      if segments.size > 1
+        addNode(segments.shift).addNode(Path.join(*segments), type)
+      else
+        @nodes[path] ||= (@changes[path] = create(path, type))
+      end
+    end
+
+    def getNode(path)
+      segments = Path.split(path)
+
+      if segments.size > 1
+        getNode(segments.shift).getNode(Path.join(*segments))
+      else
+        @nodes[path] ||= create(path).load()
+      end
+    end
+
+    def getNodes
+      @nodes
+    end
+
+    def setPrimaryType(type)
+      @changes[JCR_PRIMARY_TYPE] = type
+      @primaryType = type
+    end
+
+    def getPrimaryNodeType
+      @primaryType
+    end
+
+    def addMixin(name)
+      @changes[JCR_MIXIN_TYPE] ||= []
+      @changes[JCR_MIXIN_TYPE] << name
+
+      @mixins << name
+    end
+
+    def removeMixin(name)
+      @changes[JCR_PRIMARY_TYPE].delete(name) if @changes[JCR_PRIMARY_TYPE]
+      @mixins.delete(name)
+    end
+
+    def setProperty(name, value)
+      @changes[name] = value
+      @properties[name] = value
+    end
+
+    def getProperty(name)
+      @properties[name]
+    end
+
+    def getProperties
+      @properties
     end
 
     protected
 
-    def process_properties!
-      @properties.reject! do |k, v|
-        v.is_a? Hash or v.is_a? Array
-      end
+    def create(path, type=nil)
+      node = Node.new(Path.join(getPath(), path), self, getRepo())
+      node.setPrimaryType(type) if type
+      node
     end
 
-    def process_children(properties)
-      properties.reject! do |k, v|
-        !v.is_a? Hash
-      end
-
-      properties.map do |k, v|
-        Node.new(k, v, self)
-      end
+    def load
+      parse(getRepo().export(getPath()))
     end
 
-    def client
-      @client ||= parent.send(:client)
+    def serialize
+      data = {}
+
+      @changes.each do |k, v|
+        next if v.nil? || (v.respond_to?(:size) && v.size == 0)
+
+        if v.respond_to? :serialize
+          v.serialize.each do |kk, vv|
+            data[Path.abs(k, kk)] = vv
+          end
+        else
+          data[k] = v
+        end
+      end
+
+      data
+    end
+
+    def parse(data)
+      data.each do |k, v|
+        if k.include?(':')
+          if k.start_with?(':')
+            @types[k[1..-1]] = v
+          else
+            @properties[k] = v
+          end
+        else
+          @nodes[k] = nil
+        end
+      end
+
+      @primaryType = @properties.delete(JCR_PRIMARY_TYPE)
+      @mixins = @properties.delete(JCR_MIXIN_TYPE)
+
+      self
+    end
+
+    def clear
+      @changes = {}
+
+      @nodes.each do |k, v|
+        v.clear if v.respond_to?(:clear)
+      end
+
+      self
+    end
+
+    def getRepo
+      @repo
     end
   end
 end
