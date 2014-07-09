@@ -18,6 +18,14 @@ module Devan
         def abs(*args)
           join(SEPARATOR, *args)
         end
+
+        def parent(path)
+          File.dirname(path)
+        end
+
+        def chomp(path)
+          path.chomp(File.extname(path)) 
+        end
       end
     end
 

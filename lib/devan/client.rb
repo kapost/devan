@@ -74,7 +74,7 @@ module Devan
       elsif response.body.to_s.size > 0
         JSON.parse(response.body)
       else
-        nil
+        response.body.to_s
       end
     end
 
