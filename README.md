@@ -39,7 +39,7 @@ public class GetRepository {
       // Store content 
       Node adobe = root.addNode("adobe"); 
       Node day = adobe.addNode("cq"); 
-      day.setProperty("message", Adobe Experience Manager is part of the Adobe Digital Marketing Suite!"); 
+      day.setProperty("message", "Adobe Experience Manager is part of the Adobe Digital Marketing Suite!");
 
       // Retrieve content 
       Node node = root.getNode("adobe/cq"); 
