@@ -5,8 +5,8 @@ Gem::Specification.new do |s|
   s.name          = 'devan'
   s.version       = Devan::VERSION
   s.date          = '2013-07-18'
-  s.summary       = "Adobe CRX Client"
-  s.description   = "Adobe CRX Client"
+  s.summary       = "Adobe CRX/JCR Client"
+  s.description   = "Adobe CRX/JCR Client"
   s.authors       = ["Mihail Szabolcs"]
   s.email         = 'szaby@kapost.com'
   s.files         = Dir['lib/**/*.rb']

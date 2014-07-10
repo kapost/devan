@@ -1,6 +1,6 @@
 Devan
 =====
-Devan is an [Adobe CRX](http://wem.help.adobe.com/enterprise/en_US/10-0/core/getting_started/overview.html) 
+Devan is an [Adobe CRX/JCR](http://wem.help.adobe.com/enterprise/en_US/10-0/core/getting_started/overview.html) 
 *client*.
 
 Getting Started
