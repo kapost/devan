@@ -19,7 +19,7 @@ require 'devan/repository'
 # FIXME: find a better way to handle this :)
 module HTTMultiParty::Multipartable
   def body=(value)
-    @body_parts = value.map do |(k, v)| 
+    @body_parts = Array(value).map do |(k, v)| 
       if v.respond_to?(:to_part)
         v.to_part(k, boundary)
       else

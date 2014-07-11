@@ -3,7 +3,7 @@ module Devan
     class HTTPClient
       include HTTMultiParty
       headers 'User-Agent' => VERSION_STRING
-      debug_output $stdout
+#      debug_output $stdout
     end
 
     attr_reader :url
