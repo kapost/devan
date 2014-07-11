@@ -15,7 +15,7 @@ module Devan
       @url      = url
       @username = username
       @password = password
-      @proxy    = nil
+      @proxy    = proxy
     end
 
     def activate(path, opts={})
