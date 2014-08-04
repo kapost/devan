@@ -7,9 +7,9 @@ require 'time'
 
 require 'devan/version'
 require 'devan/error'
+require 'devan/value'
 require 'devan/binary'
 require 'devan/datetime'
-require 'devan/value'
 require 'devan/credentials'
 require 'devan/part'
 require 'devan/client'
@@ -26,7 +26,7 @@ module HTTMultiParty::Multipartable
       else
         Parts::Part.new(boundary, k, v)
       end
-    end
+    end.flatten
 
     @body_parts << Parts::EpiloguePart.new(boundary)
     set_headers_for_body

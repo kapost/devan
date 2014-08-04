@@ -108,7 +108,7 @@ module Devan
     end
 
     def removeMixin(name)
-      @changes[JCR_PRIMARY_TYPE].delete(name) if @changes[JCR_PRIMARY_TYPE]
+      @changes[JCR_MIXIN_TYPE].delete(name) if @changes[JCR_MIXIN_TYPE]
       @mixins.delete(name)
     end
 
@@ -150,6 +150,11 @@ module Devan
         else
           data[k] = v
         end
+      end
+
+      mixins = data[JCR_MIXIN_TYPE]
+      if mixins.is_a?(Array) && mixins.any?
+        data[JCR_MIXIN_TYPE] = Devan::Value.new(mixins, 'name')
       end
 
       data
