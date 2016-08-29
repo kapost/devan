@@ -1,3 +1,5 @@
+require 'time'
+
 module Devan
   class DateTime < UploadIO
     JCR_DATE_MIME_TYPE = 'jcr-value/date'
@@ -9,7 +11,7 @@ module Devan
     end
 
     def initialize(input)
-      @time = case input
+      @_time = case input
       when Time
         input
       when String
@@ -28,7 +30,7 @@ module Devan
     end
 
     def to_s
-      @time.xmlschema.sub!(/\+/, '.000+')
+      @_formatted ||= @_time.utc.iso8601.sub(/Z$/, '.000+00:00')
     end
   end
 end
