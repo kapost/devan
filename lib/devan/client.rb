@@ -10,12 +10,14 @@ module Devan
     attr_reader :username
     attr_reader :password
     attr_reader :proxy
+    attr_reader :verify_ssl
 
-    def initialize(url, username, password, proxy=nil)
-      @url      = url
-      @username = username
-      @password = password
-      @proxy    = proxy
+    def initialize(url, username, password, proxy=nil, verify_ssl=true)
+      @url        = url
+      @username   = username
+      @password   = password
+      @proxy      = proxy
+      @verify_ssl = verify_ssl
     end
 
     def activate(path, opts={})
@@ -79,16 +81,11 @@ module Devan
     end
 
     def http
-      @http ||= begin
-        client = self
-        Class.new(HTTPClient) do |klass|
-          klass.base_uri(client.url.to_s)
-          klass.basic_auth(client.username, client.password)
-
-          if proxy = client.proxy
-            klass.http_proxy(proxy.host, proxy.port, proxy.user, proxy.password)
-          end
-        end
+      @http ||= Class.new(HTTPClient).tap do |klass|
+        klass.default_options[:verify] = verify_ssl
+        klass.base_uri(url.to_s)
+        klass.basic_auth(username, password)
+        klass.http_proxy(proxy.host, proxy.port, proxy.user, proxy.password) if proxy
       end
     end
   end

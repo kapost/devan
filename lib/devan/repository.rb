@@ -96,7 +96,8 @@ module Devan
       @client ||= Devan::Client.new(url,
                                     credentials.username, 
                                     credentials.password,
-                                    credentials.proxy)
+                                    credentials.proxy,
+                                    credentials.verify_ssl)
     end
   end
 end
